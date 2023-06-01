@@ -37,12 +37,14 @@ func handleTweetSearch(c *fiber.Ctx) error {
 
 func main() {
 	scraper = twitterscraper.New()
+	scraper = scraper.WithReplies(false)
 	err := scraper.LoginOpenAccount()
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 	latestScraper = twitterscraper.New()
+	latestScraper = scraper.WithReplies(false)
 	err = scraper.LoginOpenAccount()
 	if err != nil {
 		logrus.Error(err)
