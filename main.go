@@ -13,6 +13,7 @@ import (
 )
 
 var scraper *twitterscraper.Scraper
+var latestScraper *twitterscraper.Scraper
 var size int
 var requests int
 
@@ -21,8 +22,12 @@ func handleTweetSearch(c *fiber.Ctx) error {
 	num := c.QueryInt("n", 10)
 	logrus.Info("Searching for tweets with query: ", query)
 	var results []*twitterscraper.TweetResult
-	tweets := scraper.SearchTweets(context.Background(), url.QueryEscape(query), num)
+	tweets := scraper.SearchTweets(context.Background(), url.QueryEscape(query), num/2)
 	for tweet := range tweets {
+		results = append(results, tweet)
+	}
+	latestTweets := latestScraper.SearchTweets(context.Background(), url.QueryEscape(query), num/2)
+	for tweet := range latestTweets {
 		results = append(results, tweet)
 	}
 	size += len(results)
@@ -32,12 +37,18 @@ func handleTweetSearch(c *fiber.Ctx) error {
 
 func main() {
 	scraper = twitterscraper.New()
-	scraper.SetSearchMode(twitterscraper.SearchLatest)
 	err := scraper.LoginOpenAccount()
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
+	latestScraper = twitterscraper.New()
+	err = scraper.LoginOpenAccount()
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	scraper.SetSearchMode(twitterscraper.SearchLatest)
 	app := fiber.New()
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(map[string]interface{}{
